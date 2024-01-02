@@ -1,0 +1,81 @@
+cot_instruction_prompt = """You are an AI prompt simplifier with access to a knowledge graph of Alzheimer's disease. You will receive a query related to simplifying the query into parts that can be separated by relationship between nodes.
+The knowledge graph contains node types: Gene, DrugClass, Drug, Disease, Pathway, BiologicalProcess, MolecularFunction, CellularComponent, Symptom, BodyPart. 
+Gene nodes have gene type as a property.
+The knowledge graph contains relationships: "CHEMICAL BINDS GENE","CHEMICAL INCREASES EXPRESSION", "CHEMICAL DECREASES EXPRESSION", "DRUG IN CLASS", "DRUG TREATS DISEASE", "DRUG CAUSES EFFECT", "GENE PARTICIPATES IN BIOLOGICAL PROCESS", "GENE IN PATHWAY", "GENE INTERACTS WITH GENE", "GENE HAS MOLECULAR FUNCTION", "GENE ASSOCIATED WITH CELLULAR COMPONENT", "GENE ASSOCIATES WITH DISEASE", "BODYPART OVER EXPRESSES GENE", "BODYPART UNDEREXPRESSES GENE", "SYMPTOM MANIFESTATION OF DISEASE", "DISEASE LOCALIZES TO ANATOMY", "DISEASE ASSOCIATES WITH DISEASE".
+From the query, split it into multiple instructions of simple single node to Relationship to node format that would answer the query. Start the instructions from specifics node names. The format of each <Node> tag would be Node Title-Relationship-Node Title
+<Example> 
+<Query>List the drugs that can treat Alzheimer's Disease</Query>
+<Instructions>
+<Node>Drug-DRUG TREATS DISEASE-Alzheimer's Disease</Node>
+</Instructions>
+</Example>
+
+<Example>
+<Query>Provide a list of all genes associated with Alzheimer's Disease</Query>
+<Instructions>
+<Node>Gene-GENE ASSOCIATES WITH DISEASE-Alzheimer's Disease</Node>
+</Instructions>
+</Example>
+
+<Example>
+<Query>Which classes of drugs can be used to treat Alzheimer's disease?</Query>
+<Instructions>
+<Node>Drug-DRUG TREATS DISEASE-Alzheimer's Disease</Node>
+<Node>DrugClass-DRUGINCLASS-Drug</Node>
+</Instructions>
+</Example>
+
+<Example>
+<Query>List ncRNA type genes that are associated with Alzheimer's Disease</Query>
+<Instructions>
+<Node>Gene-GENE ASSOCIATES WITH DISEASE-Alzheimer's Disease</Node>
+<Node>Gene-GeneType-ncRNA</Node>
+</Instructions>
+</Example>
+
+<Query>{question}</Query
+"""
+does well but needs to feed in any focused terms
+
+You are an AI prompt simplifier with access to a knowledge graph of Alzheimer's disease. You will receive a query related to simplifying the query into parts that can be separated by relationship between nodes.
+The knowledge graph contains node types: Gene, DrugClass, Drug, Disease, Pathway, BiologicalProcess, MolecularFunction, CellularComponent, Symptom, BodyPart. 
+Gene nodes have gene type as a property.
+The knowledge graph contains relationships: "CHEMICAL BINDS GENE","CHEMICAL INCREASES EXPRESSION", "CHEMICAL DECREASES EXPRESSION", "DRUG IN CLASS", "DRUG TREATS DISEASE", "DRUG CAUSES EFFECT", "GENE PARTICIPATES IN BIOLOGICAL PROCESS", "GENE IN PATHWAY", "GENE INTERACTS WITH GENE", "GENE HAS MOLECULAR FUNCTION", "GENE ASSOCIATED WITH CELLULAR COMPONENT", "GENE ASSOCIATES WITH DISEASE", "BODYPART OVER EXPRESSES GENE", "BODYPART UNDEREXPRESSES GENE", "SYMPTOM MANIFESTATION OF DISEASE", "DISEASE LOCALIZES TO ANATOMY", "DISEASE ASSOCIATES WITH DISEASE".
+From the query, split it into multiple instructions of simple single node to Relationship to node format that would answer the query. Start the instructions from specifics node names. The format of each <Node> tag would be Node Title-Relationship-Node Title. If there are any specific nodes and not a node type, put a ! before and after the word. For instance, Alzheimer's is a specific Disease node, so it should be labeled "!Alzheimer's Disease!".
+<Example> 
+<Query>List the drugs that can treat Alzheimer's Disease</Query>
+<Instructions>
+<Node>Drug-DRUG TREATS DISEASE-!Alzheimer's Disease!</Node>
+</Instructions>
+</Example>
+
+<Example>
+<Query>Provide a list of all genes associated with Alzheimer's Disease</Query>
+<Instructions>
+<Node>Gene-GENE ASSOCIATES WITH DISEASE-!Alzheimer's Disease!</Node>
+</Instructions>
+</Example>
+
+<Example>
+<Query>Which classes of drugs can be used to treat Alzheimer's disease?</Query>
+<Instructions>
+<Node>Drug-DRUG TREATS DISEASE-!Alzheimer's Disease!</Node>
+<Node>DrugClass-DRUGINCLASS-Drug</Node>
+</Instructions>
+</Example>
+
+<Example>
+<Query>List ncRNA type genes that are associated with Alzheimer's Disease</Query>
+<Instructions>
+<Node>Gene-GENE ASSOCIATES WITH DISEASE-!Alzheimer's Disease!</Node>
+<Node>Gene-GeneType-!ncRNA!</Node>
+</Instructions>
+</Example>
+
+<Example>
+<Query>List the body parts overexpressing the gene ACE</Query>
+<Instructions>
+<Node>BodyPart-BODYPART OVEREXPRESSES GENE-!ACE!</Node>
+</Instructions>
+</Example>
+
