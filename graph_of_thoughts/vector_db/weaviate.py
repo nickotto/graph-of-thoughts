@@ -84,6 +84,16 @@ class WeaviateClient:
             .with_additional(additional)
             .do()
         )
+    
+    def query_with_hybrid(self, properties=["knowledge"], near_vector=[],  near_text='', additional="score", autocut=5):
+        return ((self.client.query
+            .get(self.db, properties))
+            .with_hybrid(query = near_text, vector = near_vector, alpha = 0.25)
+            # .with_limit(limit)
+            .with_autocut(autocut)
+            .with_additional(additional)
+            .do()
+        )
         
     def object_count(self):
         return ((self.client.query
@@ -92,24 +102,34 @@ class WeaviateClient:
             .do()))
         
     
-    def get_knowledge(self,embedded_question, max_tokens=4000, max_distance = 0.3):
-        knowledge_array = self.query_near_vector(near_vector=embedded_question, additional=["distance"], limit=self.limit)
+    def get_knowledge(self,embedded_question, max_tokens=4000, max_distance = 0.3, min_score = 0.003, keyword_filter=''):
+        if keyword_filter != '':
+            knowledge_array = self.query_with_hybrid(near_vector=embedded_question, near_text=keyword_filter, additional=["score"])
+        else:
+            knowledge_array = self.query_near_vector(near_vector=embedded_question, additional=["distance"], limit=self.limit)
+        # knowledge_array = self.query_near_vector(near_vector=embedded_question, additional=["distance"], limit=self.limit)
         knowledge_array = knowledge_array["data"]["Get"][self.config["db"]]
-        
+        # print(knowledge_array)
         in_context = []
         distances = []
         cur_tokens = 0
         for knowledge in knowledge_array:
-            # print(knowledge['_additional']["distance"])
-            # print(knowledge["knowledge"])
-            if knowledge['_additional']["distance"] > max_distance:
-                break
+            if keyword_filter == '' :
+                if knowledge['_additional']["distance"] > max_distance:
+                    break
+            else:
+                if float(knowledge['_additional']["score"]) < min_score:
+                    break
             
             cur_tokens += len(knowledge["knowledge"].split(" "))
             if cur_tokens > max_tokens:
                 break
             in_context.append(knowledge["knowledge"])
-            distances.append(knowledge['_additional']["distance"])
+
+            if keyword_filter == '' :
+                distances.append(knowledge['_additional']["distance"])
+            else:  
+                distances.append(float(knowledge['_additional']["score"]))
             
         return in_context, distances
     

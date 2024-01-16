@@ -448,6 +448,9 @@ class Generate(Operation):
         for thought in previous_thoughts:
             base_state = thought.state
             prompt = prompter.generate_prompt(self.num_branches_prompt, **base_state)
+            if prompt is None or prompt == "":
+                self.logger.debug("Prompt for LM is empty")
+                continue
             self.logger.debug("Prompt for LM: %s", prompt)
             responses = lm.get_response_texts(
                 lm.query(prompt, num_responses=self.num_branches_response)
@@ -461,6 +464,21 @@ class Generate(Operation):
                     self.thoughts[-1].id,
                     self.thoughts[-1].state,
                 )
+                print("from operations:", new_state)
+                if "generate_successors" in new_state:
+                    print("generate_successors:", new_state["generate_successors"])
+                    # print("generate_successors original state:", self.thoughts[-1].state)
+                    for i in range(new_state["generate_successors"]):
+                        #create a knowledge node with an index attached to it
+                        gen_nda = Generate(1, 1)
+                        gen_nda.thoughts = [Thought(
+                                    state={**self.thoughts[-1].state, "edge_id": i}
+                                )]
+                        print("adding successor with state:", {**self.thoughts[-1].state, "edge_id": i})
+                        self.add_successor(gen_nda)
+                    self.add_successor(Aggregate(new_state["generate_successors"]))
+
+                
         if (
             len(self.thoughts)
             > self.num_branches_prompt

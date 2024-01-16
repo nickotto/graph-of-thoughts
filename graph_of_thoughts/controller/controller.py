@@ -78,12 +78,16 @@ class Controller:
                 self.lm, self.prompter, self.parser, **self.problem_parameters
             )
             self.logger.info("Operation %s executed", current_operation.operation_type)
+            self.logger.info("Successors of operation %s", current_operation.successors)
+            # self.logger.info("Operations left to be executed. before successor added. %s", execution_queue)
             for operation in current_operation.successors:
-                assert (
-                    operation in self.graph.operations
-                ), "The successor of an operation is not in the operations graph"
+                # assert (
+                #     operation in self.graph.operations
+                # ), "The successor of an operation is not in the operations graph"
                 if operation.can_be_executed():
+                    print(operation.thoughts[0].state)
                     execution_queue.append(operation)
+            self.logger.info("Operations left to be executed %s", execution_queue)
         self.logger.info("All operations executed")
         self.run_executed = True
 
