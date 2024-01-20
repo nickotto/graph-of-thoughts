@@ -447,6 +447,8 @@ class Generate(Operation):
 
         for thought in previous_thoughts:
             base_state = thought.state
+            if "generate_successors" in base_state:
+                base_state.pop("generate_successors")
             prompt = prompter.generate_prompt(self.num_branches_prompt, **base_state)
             if prompt is None or prompt == "":
                 self.logger.debug("Prompt for LM is empty")
@@ -457,26 +459,71 @@ class Generate(Operation):
             )
             self.logger.debug("Responses from LM: %s", responses)
             for new_state in parser.parse_generate_answer(base_state, responses):
-                new_state = {**base_state, **new_state}
+                new_state = {**base_state, **new_state, "prompt": prompt}
                 self.thoughts.append(Thought(new_state))
                 self.logger.debug(
                     "New thought %d created with state %s",
                     self.thoughts[-1].id,
                     self.thoughts[-1].state,
                 )
-                print("from operations:", new_state)
+                # print("from operations:", new_state)
                 if "generate_successors" in new_state:
-                    print("generate_successors:", new_state["generate_successors"])
+                    # print("generate_successors:", new_state["generate_successors"])
                     # print("generate_successors original state:", self.thoughts[-1].state)
+                    predecessor = self
                     for i in range(new_state["generate_successors"]):
+
                         #create a knowledge node with an index attached to it
+                        sub_text = Selector(
+                            lambda thoughts, list_id=i: [
+                                Thought(
+                                    state={**thoughts[0].state, "phase": base_state["phase"]+1, "edge_id": list_id, "total_edges": new_state["generate_successors"]}
+                                )
+                            ]
+                        )
+                        if len(sub_text.thoughts) > 0 and "generate_successors" in sub_text.thoughts[-1].state:
+                            sub_text.thoughts[-1].state.pop("generate_successors")
+                        sub_text.add_predecessor(predecessor)
+                        
                         gen_nda = Generate(1, 1)
-                        gen_nda.thoughts = [Thought(
-                                    state={**self.thoughts[-1].state, "edge_id": i}
-                                )]
-                        print("adding successor with state:", {**self.thoughts[-1].state, "edge_id": i})
-                        self.add_successor(gen_nda)
-                    self.add_successor(Aggregate(new_state["generate_successors"]))
+                        gen_nda.add_predecessor(sub_text)
+                        
+                        
+                        # sub_text = Selector(
+                        #     lambda predecessor, list_id=i: [
+                        #         Thought(
+                        #             state={**predecessor.thoughts[0].state, "phase": base_state["phase"]+1, "edge_id": list_id, "total_edges": new_state["generate_successors"]}
+                        #         )
+                        #     ]
+                        # )
+                        # sub_text.thoughts = [Thought(
+                        #     state={**predecessor.thoughts[0].state, "phase": base_state["phase"]+1, "edge_id": i, "total_edges": new_state["generate_successors"]}
+                        # )]
+                        # #remove the generate_successors key from the state
+                        # if "generate_successors" in sub_text.thoughts[-1].state:
+                        #     sub_text.thoughts[-1].state.pop("generate_successors")
+                        # sub_text.add_predecessor(predecessor)
+                        # gen_nda = Generate(1, 1)
+                        # gen_nda.add_predecessor(sub_text)
+
+                        # #create a knowledge node with an index attached to it
+                        # gen_nda = Generate(1, 1)
+                        # gen_nda.thoughts = [Thought(
+                        #             state={**predecessor.thoughts[-1].state, "edge_id": i, "phase":1}
+                        #         )]
+                        
+                        # #remove the generate_successors key from the state
+                        # if "generate_successors" in gen_nda.thoughts[0].state:
+                        #     gen_nda.thoughts[0].state.pop("generate_successors")
+
+
+                        # gen_nda.add_predecessor(predecessor)
+                        predecessor = gen_nda
+                    
+                    gen_nda = Generate(1, 1)
+                    predecessor.add_successor(gen_nda)
+                    gen_nda.add_successor(Score(1, False))
+
 
                 
         if (

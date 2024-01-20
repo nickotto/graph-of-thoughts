@@ -81,11 +81,10 @@ class Controller:
             self.logger.info("Successors of operation %s", current_operation.successors)
             # self.logger.info("Operations left to be executed. before successor added. %s", execution_queue)
             for operation in current_operation.successors:
-                # assert (
-                #     operation in self.graph.operations
-                # ), "The successor of an operation is not in the operations graph"
+                assert (
+                    (operation in self.graph.operations and "dynamic" not in self.problem_parameters["method"]) or "dynamic" in self.problem_parameters["method"]
+                ), "The successor of an operation is not in the operations graph"
                 if operation.can_be_executed():
-                    print(operation.thoughts[0].state)
                     execution_queue.append(operation)
             self.logger.info("Operations left to be executed %s", execution_queue)
         self.logger.info("All operations executed")
