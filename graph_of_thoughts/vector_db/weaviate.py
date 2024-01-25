@@ -114,6 +114,9 @@ class WeaviateClient:
         distances = []
         cur_tokens = 0
         for knowledge in knowledge_array:
+            if keyword_filter != '' and keyword_filter.lower() not in knowledge["knowledge"].lower():
+                continue
+
             if keyword_filter == '' :
                 if knowledge['_additional']["distance"] > max_distance:
                     break
